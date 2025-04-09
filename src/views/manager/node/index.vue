@@ -2,29 +2,27 @@
   <div class="app-container">
     <el-form :model="queryParams" ref="queryRef" :inline="true" v-show="showSearch" label-width="68px">
       <el-form-item label="点位名称" prop="nodeName">
-        <el-input
-          v-model="queryParams.nodeName"
-          placeholder="请输入点位名称"
-          clearable
-          @keyup.enter="handleQuery"
-        />
+        <el-input v-model="queryParams.nodeName" placeholder="请输入点位名称" clearable @keyup.enter="handleQuery" />
       </el-form-item>
-      <el-form-item label="区域ID" prop="regionId">
-        <el-input
+      <el-form-item label="区域搜索" prop="regionId">
+        <!-- <el-input
           v-model="queryParams.regionId"
           placeholder="请输入区域ID"
           clearable
           @keyup.enter="handleQuery"
-        />
+        /> -->
+        <el-select v-model="queryParams.regionId" placeholder="请选择区域" clearable>
+          <el-option v-for="item in regionList" :key="item.id" :label="item.regionName" :value="item.id"></el-option>
+        </el-select>
       </el-form-item>
-      <el-form-item label="合作商ID" prop="partnerId">
+      <!-- <el-form-item label="合作商ID" prop="partnerId">
         <el-input
           v-model="queryParams.partnerId"
           placeholder="请输入合作商ID"
           clearable
           @keyup.enter="handleQuery"
         />
-      </el-form-item>
+      </el-form-item> -->
       <el-form-item>
         <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
         <el-button icon="Refresh" @click="resetQuery">重置</el-button>
@@ -33,73 +31,58 @@
 
     <el-row :gutter="10" class="mb8">
       <el-col :span="1.5">
-        <el-button
-          type="primary"
-          plain
-          icon="Plus"
-          @click="handleAdd"
-          v-hasPermi="['manager:node:add']"
-        >新增</el-button>
+        <el-button type="primary" plain icon="Plus" @click="handleAdd" v-hasPermi="['manager:node:add']">新增</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="success"
-          plain
-          icon="Edit"
-          :disabled="single"
-          @click="handleUpdate"
-          v-hasPermi="['manager:node:edit']"
-        >修改</el-button>
+        <el-button type="success" plain icon="Edit" :disabled="single" @click="handleUpdate"
+          v-hasPermi="['manager:node:edit']">修改</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="danger"
-          plain
-          icon="Delete"
-          :disabled="multiple"
-          @click="handleDelete"
-          v-hasPermi="['manager:node:remove']"
-        >删除</el-button>
+        <el-button type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete"
+          v-hasPermi="['manager:node:remove']">删除</el-button>
       </el-col>
       <el-col :span="1.5">
-        <el-button
-          type="warning"
-          plain
-          icon="Download"
-          @click="handleExport"
-          v-hasPermi="['manager:node:export']"
-        >导出</el-button>
+        <el-button type="warning" plain icon="Download" @click="handleExport"
+          v-hasPermi="['manager:node:export']">导出</el-button>
       </el-col>
       <right-toolbar v-model:showSearch="showSearch" @queryTable="getList"></right-toolbar>
     </el-row>
 
     <el-table v-loading="loading" :data="nodeList" @selection-change="handleSelectionChange">
       <el-table-column type="selection" width="55" align="center" />
-      <el-table-column label="主键id" align="center" prop="id" />
+      <el-table-column label="序号" type="index" width="50" align="center" prop="id" />
       <el-table-column label="点位名称" align="center" prop="nodeName" />
-      <el-table-column label="详细地址" align="center" prop="address" />
+      <el-table-column label="区域ID" align="center" prop="regionId" />
       <el-table-column label="商圈类型" align="center" prop="businessType">
         <template #default="scope">
-          <dict-tag :options="business_type" :value="scope.row.businessType"/>
+          <dict-tag :options="business_type" :value="scope.row.businessType" />
         </template>
       </el-table-column>
-      <el-table-column label="区域ID" align="center" prop="regionId" />
       <el-table-column label="合作商ID" align="center" prop="partnerId" />
+      <el-table-column label="详细地址" align="left" prop="address">
+        <template #default="scope">
+          <el-tooltip
+            class="box-item"
+            effect="dark"
+            :content="scope.row.address"
+            placement="top-start"
+          >
+            <div class="address-cell">{{ scope.row.address }}</div>
+          </el-tooltip>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
         <template #default="scope">
-          <el-button link type="primary" icon="Edit" @click="handleUpdate(scope.row)" v-hasPermi="['manager:node:edit']">修改</el-button>
-          <el-button link type="primary" icon="Delete" @click="handleDelete(scope.row)" v-hasPermi="['manager:node:remove']">删除</el-button>
+          <el-button link type="primary" @click="handleUpdate(scope.row)"
+            v-hasPermi="['manager:node:edit']">修改</el-button>
+          <el-button link type="primary" @click="handleDelete(scope.row)"
+            v-hasPermi="['manager:node:remove']">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
-    
-    <pagination
-      v-show="total>0"
-      :total="total"
-      v-model:page="queryParams.pageNum"
-      v-model:limit="queryParams.pageSize"
-      @pagination="getList"
-    />
+
+    <pagination v-show="total > 0" :total="total" v-model:page="queryParams.pageNum"
+      v-model:limit="queryParams.pageSize" @pagination="getList" />
 
     <!-- 添加或修改点位管理对话框 -->
     <el-dialog :title="title" v-model="open" width="500px" append-to-body>
@@ -107,24 +90,27 @@
         <el-form-item label="点位名称" prop="nodeName">
           <el-input v-model="form.nodeName" placeholder="请输入点位名称" />
         </el-form-item>
-        <el-form-item label="详细地址" prop="address">
-          <el-input v-model="form.address" type="textarea" placeholder="请输入内容" />
+        <el-form-item label="所属区域" prop="regionId">
+          <!-- <el-input v-model="form.regionId" placeholder="请输入区域ID" /> -->
+          <el-select v-model="form.regionId" placeholder="请选择区域">
+            <el-option v-for="item in regionList" :key="item.id" :label="item.regionName" :value="item.id"></el-option>
+          </el-select>
         </el-form-item>
         <el-form-item label="商圈类型" prop="businessType">
           <el-select v-model="form.businessType" placeholder="请选择商圈类型">
-            <el-option
-              v-for="dict in business_type"
-              :key="dict.value"
-              :label="dict.label"
-              :value="parseInt(dict.value)"
-            ></el-option>
+            <el-option v-for="dict in business_type" :key="dict.value" :label="dict.label"
+              :value="parseInt(dict.value)"></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="区域ID" prop="regionId">
-          <el-input v-model="form.regionId" placeholder="请输入区域ID" />
-        </el-form-item>
         <el-form-item label="合作商ID" prop="partnerId">
-          <el-input v-model="form.partnerId" placeholder="请输入合作商ID" />
+          <!-- <el-input v-model="form.partnerId" placeholder="请输入合作商ID" /> -->
+          <el-select v-model="form.partnerId" placeholder="请选择合作商">
+            <el-option v-for="item in partnerList" :key="item.partnerId" :label="item.partnerName"
+              :value="item.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="详细地址" prop="address">
+          <el-input v-model="form.address" type="textarea" placeholder="请输入内容" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -139,6 +125,9 @@
 
 <script setup name="Node">
 import { listNode, getNode, delNode, addNode, updateNode } from "@/api/manager/node";
+import { listRegion } from "@/api/manager/region";
+import { listPartner } from "@/api/manager/partner";
+import { loadAllParams } from "@/api/page.js"
 
 const { proxy } = getCurrentInstance();
 const { business_type } = proxy.useDict('business_type');
@@ -278,12 +267,12 @@ function submitForm() {
 /** 删除按钮操作 */
 function handleDelete(row) {
   const _ids = row.id || ids.value;
-  proxy.$modal.confirm('是否确认删除点位管理编号为"' + _ids + '"的数据项？').then(function() {
+  proxy.$modal.confirm('是否确认删除点位管理编号为"' + _ids + '"的数据项？').then(function () {
     return delNode(_ids);
   }).then(() => {
     getList();
     proxy.$modal.msgSuccess("删除成功");
-  }).catch(() => {});
+  }).catch(() => { });
 }
 
 /** 导出按钮操作 */
@@ -293,5 +282,38 @@ function handleExport() {
   }, `node_${new Date().getTime()}.xlsx`)
 }
 
+/** 查询所有的条件对象 */
+// const loadAllParams = reactive({
+//   pageNum: 1,
+//   pageSize: 10000,
+// })
+
+/** 查询区域列表 */
+const regionList = ref([]);
+function getRegionList() {
+  listRegion(loadAllParams).then(response => {
+    regionList.value = response.rows;
+  })
+}
+
+/** 查询合作商列表 */
+const partnerList = ref([]);
+function getPartnerList() {
+  listPartner(loadAllParams).then(response => {
+    partnerList.value = response.rows;
+  })
+}
+
+getPartnerList();
+getRegionList();
 getList();
 </script>
+
+<style scoped>
+.address-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+</style>

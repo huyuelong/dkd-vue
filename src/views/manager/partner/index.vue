@@ -61,6 +61,7 @@
       <el-table-column type="selection" width="55" align="center" />
       <el-table-column label="序号" type="index" width="50" align="center" prop="id" />
       <el-table-column label="合作商名称" align="center" prop="partnerName" />
+      <el-table-column label="点位数" align="center" prop="nodeCount" />
       <el-table-column label="账号" align="center" prop="account" />
       <el-table-column label="分成比例" align="center" prop="profitRatio">
         <template #default="scope">
@@ -69,11 +70,11 @@
       </el-table-column>
       <el-table-column label="联系人" align="center" prop="contactPerson" />
       <el-table-column label="联系电话" align="center" prop="contactPhone" />
-      <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" class-name="small-padding fixed-width" width="300">
         <template #default="scope">
+          <el-button link type="primary" @click="resetPwd(scope.row)" v-hasPermi="['manager:partner:edit']">重置密码</el-button>
           <el-button link type="primary" @click="getPartnerInfo(scope.row)" v-hasPermi="['manager:partner:query']">查看详情</el-button>
           <el-button link type="primary" @click="handleUpdate(scope.row)" v-hasPermi="['manager:partner:edit']">修改</el-button>
-
           <el-button link type="primary" @click="handleDelete(scope.row)" v-hasPermi="['manager:partner:remove']">删除</el-button>
         </template>
       </el-table-column>
@@ -134,7 +135,7 @@
 </template>
 
 <script setup name="Partner">
-import { listPartner, getPartner, delPartner, addPartner, updatePartner } from "@/api/manager/partner";
+import { listPartner, getPartner, delPartner, addPartner, updatePartner, resetPartnerPwd } from "@/api/manager/partner";
 
 const { proxy } = getCurrentInstance();
 
@@ -290,6 +291,16 @@ function handleDelete(row) {
   }).then(() => {
     getList();
     proxy.$modal.msgSuccess("删除成功");
+  }).catch(() => {});
+}
+
+/** 重置合作商密码 */
+function resetPwd(row) {
+  const _id = row.id;
+  proxy.$modal.confirm('你确定要重置该合作商密码码？').then(function() {
+    return resetPartnerPwd(_id);
+  }).then(() => {
+    proxy.$modal.msgSuccess("重置密码成功");
   }).catch(() => {});
 }
 
